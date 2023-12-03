@@ -42,6 +42,7 @@ const dayArg = isDayFirst ? dayOrAction : undefined;
 
   if (day === 'all') {
     for (const day of days) {
+      console.log(`Running ${day}...`);
       await run(day, action);
     }
 
