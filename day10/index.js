@@ -79,9 +79,49 @@ function solve(/** @type {Array<string>} */ lines) {
   let y = lines.findIndex((line) => line.includes(start));
   let x = lines[y].indexOf(start);
 
-  const [pipeLength] = getPipeLength(lines, x, y);
+  const [pipeLength, isLoopMap] = getPipeLength(lines, x, y);
 
-  return [pipeLength / 2, 0];
+  let innerDots = 0;
+  for (let i = 0; i < isLoopMap.length; i++) {
+    if (!isLoopMap[i]) continue;
+
+    let isInside = false;
+    let stack = [];
+    for (let j = 0; j < isLoopMap[i].length; j++) {
+      if (!isLoopMap[i][j] && isInside) {
+        innerDots++;
+        continue;
+      }
+
+      let curr = lines[i].at(j);
+      if (curr === start) {
+        if (isLoopMap[i]?.[j + 1] && isLoopMap[i]?.[j - 1]) curr = pipes.h;
+        else if (isLoopMap[i + 1]?.[j] && isLoopMap[i - 1]?.[j]) curr = pipes.v;
+        else if (isLoopMap[i]?.[j + 1] && isLoopMap[i + 1]?.[j]) curr = pipes.tl;
+        else if (isLoopMap[i]?.[j + 1] && isLoopMap[i - 1]?.[j]) curr = pipes.bl;
+        else if (isLoopMap[i]?.[j - 1] && isLoopMap[i + 1]?.[j]) curr = pipes.tr;
+        else if (isLoopMap[i]?.[j - 1] && isLoopMap[i - 1]?.[j]) curr = pipes.br;
+      }
+
+      if (!isLoopMap[i][j]) continue;
+      if (curr === pipes.h) continue;
+
+      if (curr === pipes.v) {
+        stack = [];
+        isInside = !isInside;
+      } else if (curr === pipes.tl || curr === pipes.bl) {
+        stack.push(curr);
+        isInside = !isInside;
+      } else {
+        const prev = stack.pop();
+        if (prev === pipes.tl && curr === pipes.tr) isInside = !isInside;
+        else if (prev === pipes.bl && curr === pipes.br) isInside = !isInside;
+        else stack.push(prev);
+      }
+    }
+  }
+
+  return [pipeLength / 2, innerDots];
 }
 
 function main() {
@@ -95,17 +135,23 @@ function main() {
 function test() {
   const [first1, second1] = solve(readFile('./day10/test-1.txt', 'utf8').split('\n'));
   expect(first1).toBe(4);
-  // expect(second1).toBe(1);
+  expect(second1).toBe(1);
 
   const [first2, second2] = solve(readFile('./day10/test-2.txt', 'utf8').split('\n'));
   expect(first2).toBe(8);
-  // expect(second2).toBe(1);
+  expect(second2).toBe(1);
 
   const [, second3] = solve(readFile('./day10/test-3.txt', 'utf8').split('\n'));
-  // expect(second3).toBe(4);
+  expect(second3).toBe(4);
 
   const [, second4] = solve(readFile('./day10/test-4.txt', 'utf8').split('\n'));
-  // expect(second4).toBe(4);
+  expect(second4).toBe(4);
+
+  const [, second5] = solve(readFile('./day10/test-5.txt', 'utf8').split('\n'));
+  expect(second5).toBe(8);
+
+  const [, second6] = solve(readFile('./day10/test-6.txt', 'utf8').split('\n'));
+  expect(second6).toBe(10);
 
   console.log('All tests passed!');
 }
